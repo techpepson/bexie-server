@@ -11,3 +11,8 @@ export enum Status {
   SUSPENDED = 'suspended',
   PENDING = 'pending',
 }
+
+export enum PasswordResetChannel {
+  EMAIL = 'email',
+  SMS = 'sms',
+}

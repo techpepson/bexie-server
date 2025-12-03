@@ -1,0 +1,89 @@
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width,initial-scale=1' />
+    <title>Email verification</title>
+    <style>
+      :root {
+        --primary: #1e88e5;
+        --primary-dark: #1565c0;
+        --muted: #666;
+        --bg: #f7f9fc;
+      }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #222;
+        background: var(--bg);
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 28px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 28px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        border-top: 6px solid var(--primary);
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 12px 0;
+        color: var(--primary-dark);
+      }
+      p {
+        line-height: 1.5;
+        margin: 12px 0;
+      }
+      a {
+        color: var(--primary);
+      }
+      .btn {
+        display: inline-block;
+        background: linear-gradient(
+          180deg,
+          var(--primary),
+          var(--primary-dark)
+        );
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 18px;
+        border-radius: 6px;
+        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.06);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .code {
+        background: #f3f4f6;
+        padding: 8px 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        word-break: break-all;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 13px;
+        color: #8a8a8a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h1>Hello {{name}},</h1>
+
+      <p>Thanks for creating an account with
+        <strong>{{appName}}</strong>. To complete your registration, please
+        verify your email address.</p>
+
+      <p style='text-align:center; margin:20px 0;'>
+        <a href='{{verificationUrl}}' class='btn'>Verify your email</a>
+      </p>
+
+      <p>If you didn't request this, you can safely ignore this email.</p>
+
+      <div class='footer'>— The {{appName}} team</div>
+    </div>
+  </body>
+</html>

@@ -5,6 +5,9 @@ export default () => ({
   app: {
     name: process.env.APP_NAME,
     email: process.env.APP_EMAIL,
+    devBaseUrl: process.env.SERVER_DEV_BASE_URL,
+    prodBaseUrl: process.env.SERVER_PROD_BASE_URL,
+    environment: process.env.APP_ENV || 'development',
   },
   secrets: {
     jwtSecret: process.env.JWT_CONSTANT,

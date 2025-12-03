@@ -1,0 +1,157 @@
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width,initial-scale=1' />
+    <title>Verification Successful</title>
+    <style>
+      :root {
+        --primary: #1e88e5;
+        --primary-dark: #1565c0;
+        --bg: #f4f7fb;
+        --muted: #6b7280;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        background: #fff;
+        max-width: 720px;
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 6px 24px rgba(21, 32, 43, 0.08);
+        overflow: hidden;
+        border-top: 6px solid var(--primary);
+      }
+      .card-body {
+        padding: 36px 40px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: linear-gradient(
+          180deg,
+          var(--primary),
+          var(--primary-dark)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+      }
+      h1 {
+        margin: 16px 0 6px 0;
+        font-size: 20px;
+        color: var(--primary-dark);
+      }
+      p {
+        margin: 0 0 16px 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(
+          180deg,
+          var(--primary),
+          var(--primary-dark)
+        );
+        box-shadow: 0 3px 0 rgba(21, 32, 43, 0.06);
+      }
+      .btn.secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid rgba(30, 136, 229, 0.14);
+        box-shadow: none;
+      }
+      .meta {
+        margin-top: 18px;
+        font-size: 13px;
+        color: #9aa3b2;
+      }
+      @media (max-width: 520px) {
+        .card-body {
+          padding: 20px;
+        }
+        .logo {
+          width: 40px;
+          height: 40px;
+        }
+        .btn {
+          padding: 10px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class='wrap'>
+      <div class='card'>
+        <div class='card-body'>
+          <div class='brand'>
+            <div class='logo'>{{#if
+                appInitials
+              }}{{appInitials}}{{else}}{{appName.[0]}}{{/if}}</div>
+            <div>
+              <div
+                style='font-weight:600;color:var(--primary-dark)'
+              >{{appName}}</div>
+              <div style='font-size:13px;color:var(--muted)'>Account verified</div>
+            </div>
+          </div>
+
+          <h1>You're all set, {{name}}!</h1>
+          <p>Thanks — we've successfully verified your email address. Your
+            account is now active and ready to use.</p>
+
+          <div class='actions'>
+            <a class='btn' href='{{loginUrl}}'>Go to Sign in</a>
+            <a class='btn secondary' href='{{homeUrl}}'>Return to
+              {{appName}}</a>
+          </div>
+
+          <div class='meta'>
+            <p>If you have any trouble signing in, contact us at
+              <a href='mailto:{{supportEmail}}'>{{supportEmail}}</a>.</p>
+            <p style='margin-top:8px;color:#b0bac8'>If you didn't verify this
+              account, please ignore or contact support.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
