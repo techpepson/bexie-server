@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Discount" ALTER COLUMN "description" DROP NOT NULL,
+ALTER COLUMN "amount" SET DEFAULT 0.0,
+ALTER COLUMN "validFrom" DROP NOT NULL,
+ALTER COLUMN "validTo" DROP NOT NULL;

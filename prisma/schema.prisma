@@ -14,19 +14,165 @@ datasource db {
 }
 
 model User {
-  id                          String   @id @default(uuid())
+  id                          String     @id @default(uuid())
   name                        String
-  email                       String   @unique
+  email                       String     @unique
   phone                       String
   password                    String
   role                        String
   status                      String
-  isFirstTimeUser             Boolean  @default(true)
+  isFirstTimeUser             Boolean    @default(true)
   emailVerificationToke       String?
   phoneNumberVerificationToke String?
-  isEmailVerified             Boolean  @default(false)
-  isPhoneNumberVerified       Boolean  @default(false)
+  isEmailVerified             Boolean    @default(false)
+  isPhoneNumberVerified       Boolean    @default(false)
   passwordResetToken          String?
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @default(now())
+  createdAt                   DateTime   @default(now())
+  updatedAt                   DateTime   @default(now())
+  reviews                     Reviews[]
+  logs                        Logs[]
+  consumers                   Consumer[]
+  vendors                     Vendor[]
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  shop      Shop?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  shopId    String
+}
+
+model Consumer {
+  id        String            @id @unique @default(uuid())
+  user      User              @relation(fields: [userId], references: [id])
+  userId    String
+  watched   RecentlyWatched[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @default(now())
+  cart      Cart?
+  orders    Order[]
+}
+
+model Product {
+  id               String            @id @default(uuid())
+  name             String
+  description      String
+  color            String
+  images           String[]
+  category         String
+  discount         Discount?         @relation(fields: [discountId], references: [id])
+  shop             Shop              @relation(fields: [shopId], references: [id])
+  discountType     String?
+  discountAmount   Float?
+  quantity         Int
+  status           String
+  stockStatus      String
+  price            Float
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @default(now())
+  discountId       String
+  reviews          Reviews[]
+  deliveryOption   DeliveryOption[]
+  shopId           String
+  recentlyWatcheds RecentlyWatched[]
+  carts            Cart[]
+}
+
+model Shop {
+  id            String    @id @default(uuid())
+  name          String
+  description   String
+  location      String
+  contact       String
+  deliveryRange Int
+  logo          String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
+  vendor        Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  products      Product[]
+  vendorId      String    @unique
+}
+
+model DeliveryOption {
+  id        String   @id @default(uuid())
+  type      String
+  fee       Float
+  unit      String   @default("days")
+  duration  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  orders    Order[]
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+}
+
+model Discount {
+  id          String    @id @default(uuid())
+  code        String?   @unique
+  description String?
+  type        String    @default("percentage")
+  amount      Float     @default(0.0)
+  validFrom   DateTime?
+  validTo     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  products    Product[]
+}
+
+model Reviews {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Logs {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  timestamp   DateTime @default(now())
+}
+
+model RecentlyWatched {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  consumer  Consumer @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  watchedAt DateTime @default(now())
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  productId String
+  address   String
+  quantity  Int      @default(1)
+  consumer  Consumer @relation(fields: [userId], references: [id])
+  products  Product  @relation(fields: [productId], references: [id])
+  addedAt   DateTime @default(now())
+}
+
+model Order {
+  id               String         @id @default(uuid())
+  userId           String
+  address          String
+  totalPrice       Float
+  deliveryOption   DeliveryOption @relation(fields: [deliveryOptionId], references: [id])
+  deliveryOptionId String
+  paymentMethod    String
+  status           String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now())
+  consumer         Consumer       @relation(fields: [userId], references: [id])
 }

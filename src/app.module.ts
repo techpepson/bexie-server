@@ -1,3 +1,9 @@
+import { OrderModule } from './order/order.module';
+import { OrderController } from './order/order.controller';
+import { OrderService } from './order/order.service';
+import { ProductsModule } from './product/products.module';
+import { ProductsController } from './product/products.controller';
+import { ProductsService } from './product/products.service';
 import { HelpersModule } from './helpers/helpers.module';
 import { HelpersService } from './helpers/helpers.service';
 import { AuthModule } from './auth/auth.module';
@@ -11,12 +17,20 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { PrismaService } from './prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
+    OrderModule,
+    ProductsModule,
     HelpersModule,
     AuthModule,
     ConfigModule.forRoot({ isGlobal: true, load: [globalConfig] }),
+    MulterModule.register({
+      storage: memoryStorage(),
+    }),
     MailerModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
         transport: {
@@ -39,7 +53,15 @@ import { PrismaService } from './prisma/prisma.service';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AppController],
-  providers: [HelpersService, AuthService, AppService, PrismaService],
+  controllers: [OrderController, ProductsController, AppController],
+  providers: [
+    OrderService,
+    ProductsService,
+    HelpersService,
+    AuthService,
+    AppService,
+    PrismaService,
+    JwtService,
+  ],
 })
 export class AppModule {}

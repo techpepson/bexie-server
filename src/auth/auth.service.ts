@@ -17,6 +17,7 @@ import { HelpersService } from '../helpers/helpers.service';
 import bcrypt from 'bcrypt';
 import { PasswordResetChannel, Status } from '../enum/app.enum';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly helpers: HelpersService,
     private readonly config: ConfigService,
+    private readonly jwt: JwtService,
   ) {}
 
   async register(payload: RegisterDto) {
@@ -178,6 +180,10 @@ export class AuthService {
         });
       }
 
+      const token = this.jwt.sign({
+        id: user.data?.id,
+        email: user.data?.email,
+      });
       return {
         message: 'Login successful.',
         user: {
@@ -185,6 +191,7 @@ export class AuthService {
           name: user.data!.name,
           email: user.data!.email,
           role: user.data!.role,
+          token: token,
           isFirstTimeUser: user.data!.isFirstTimeUser,
         },
       };

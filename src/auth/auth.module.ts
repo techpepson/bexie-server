@@ -1,4 +1,4 @@
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { Module } from '@nestjs/common';
 import { HelpersService } from '../helpers/helpers.service';
@@ -13,6 +13,6 @@ import { AuthService } from './auth.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [HelpersService, PrismaService, AuthService],
+  providers: [HelpersService, PrismaService, AuthService, JwtService],
 })
 export class AuthModule {}

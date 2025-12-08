@@ -19,13 +19,7 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from '../dto/auth.dto';
 import { PasswordResetChannel } from '../enum/app.enum';
-import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Request } from 'express';
 
