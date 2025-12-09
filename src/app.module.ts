@@ -1,3 +1,8 @@
+import { PaymentModule } from './payment/payment.module';
+import { PaymentService } from './payment/payment.service';
+import { CartModule } from './cart/cart.module';
+import { CartService } from './cart/cart.service';
+import { CartController } from './cart/cart.controller';
 import { OrderModule } from './order/order.module';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
@@ -23,6 +28,8 @@ import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
+    PaymentModule,
+    CartModule,
     OrderModule,
     ProductsModule,
     HelpersModule,
@@ -53,8 +60,15 @@ import { memoryStorage } from 'multer';
       inject: [ConfigService],
     }),
   ],
-  controllers: [OrderController, ProductsController, AppController],
+  controllers: [
+    CartController,
+    OrderController,
+    ProductsController,
+    AppController,
+  ],
   providers: [
+    PaymentService,
+    CartService,
     OrderService,
     ProductsService,
     HelpersService,

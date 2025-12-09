@@ -48,11 +48,11 @@ model Vendor {
 model Consumer {
   id        String            @id @unique @default(uuid())
   user      User              @relation(fields: [userId], references: [id])
-  userId    String
+  userId    String            @unique
   watched   RecentlyWatched[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @default(now())
-  cart      Cart?
+  cart      Cart[]
   orders    Order[]
 }
 
@@ -73,12 +73,15 @@ model Product {
   price            Float
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @default(now())
-  discountId       String
+  discountId       String?
   reviews          Reviews[]
   deliveryOption   DeliveryOption[]
   shopId           String
   recentlyWatcheds RecentlyWatched[]
-  carts            Cart[]
+  cartId           String?
+  cart             Cart?             @relation(fields: [cartId], references: [id])
+  orderId          String?
+  orderItems       OrderItem[]
 }
 
 model Shop {
@@ -91,7 +94,7 @@ model Shop {
   logo          String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now())
-  vendor        Vendor    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor        Vendor    @relation(fields: [vendorId], references: [userId], onDelete: Cascade)
   products      Product[]
   vendorId      String    @unique
 }
@@ -153,26 +156,38 @@ model RecentlyWatched {
 }
 
 model Cart {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  productId String
-  address   String
-  quantity  Int      @default(1)
-  consumer  Consumer @relation(fields: [userId], references: [id])
-  products  Product  @relation(fields: [productId], references: [id])
-  addedAt   DateTime @default(now())
+  id         String    @id @default(uuid())
+  consumerId String    @unique
+  quantity   Int       @default(1)
+  consumer   Consumer  @relation(fields: [consumerId], references: [userId])
+  products   Product[]
+  addedAt    DateTime  @default(now())
 }
 
 model Order {
-  id               String         @id @default(uuid())
+  id               String          @id @default(uuid())
   userId           String
   address          String
+  contact          String
   totalPrice       Float
-  deliveryOption   DeliveryOption @relation(fields: [deliveryOptionId], references: [id])
-  deliveryOptionId String
+  deliveryOption   DeliveryOption? @relation(fields: [deliveryOptionId], references: [id])
+  deliveryOptionId String?
   paymentMethod    String
+  paymentStatus    String
+  items            OrderItem[]
   status           String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now())
-  consumer         Consumer       @relation(fields: [userId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now())
+  consumer         Consumer        @relation(fields: [userId], references: [userId])
+  productId        String?
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }

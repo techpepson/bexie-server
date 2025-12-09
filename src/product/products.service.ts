@@ -107,7 +107,10 @@ export class ProductsService {
               price: payload.price,
               quantity: payload.quantity,
               status: ProductStatus.PENDING,
-              stockStatus: ProductStatus.IN_STOCK,
+              stockStatus:
+                payload.quantity > 0
+                  ? ProductStatus.IN_STOCK
+                  : ProductStatus.OUT_OF_STOCK,
               discountAmount: parseFloat(payload.discountedAmount.toString()),
               deliveryOption: {
                 create: {

@@ -5,7 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { DeliveryTpe, ProductCategory } from '../enum/app.enum';
+import { DeliveryType, ProductCategory } from '../enum/app.enum';
 
 export class ProductDto {
   @IsString()
@@ -36,9 +36,9 @@ export class ProductDto {
   @IsOptional()
   discountedAmount: number;
 
-  @IsEnum(DeliveryTpe)
+  @IsEnum(DeliveryType)
   @IsNotEmpty()
-  deliveryType: DeliveryTpe;
+  deliveryType: DeliveryType;
 
   @IsNumber()
   @IsNotEmpty()

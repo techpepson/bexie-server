@@ -94,7 +94,7 @@ export enum PaymentMethod {
   CASH_ON_DELIVERY = 'cash_on_delivery',
 }
 
-export enum DeliveryTpe {
+export enum DeliveryType {
   STANDARD = 'standard',
   EXPRESS = 'express',
   OTHER = 'other',
