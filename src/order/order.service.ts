@@ -1,8 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  PreconditionFailedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HelpersService } from '../helpers/helpers.service';
 import { OrderStatus, PaymentStatus, Role } from '../enum/app.enum';
 import { OrderDto } from '../dto/order.dto';
+import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class OrderService {
@@ -10,6 +16,7 @@ export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly helper: HelpersService,
+    private readonly payment: PaymentService,
   ) {}
 
   async placeOrder(email: string, payload: OrderDto) {
@@ -57,11 +64,40 @@ export class OrderService {
         },
       });
 
-      //send sms to product owners - to be implemented
+      //initialize payment here (optional)
+      const initPayment = await this.payment.initializePayment(
+        email,
+        payload.totalAmount,
+        payload.paymentMethod,
+      );
 
+      if (initPayment.status !== 'success') {
+        throw new PreconditionFailedException('Payment initialization failed.');
+      }
+
+      //save the reference of payment
+      await this.prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          payments: {
+            update: {
+              initReference: initPayment.reference,
+              status: PaymentStatus.PENDING,
+              accessCode: initPayment.accessCode,
+              amount: payload.totalAmount,
+              currency: 'GHS',
+              paymentMethod: payload.paymentMethod,
+              orderId: order.id,
+            },
+          },
+        },
+      });
       return {
         message: 'Order placed successfully',
         order,
+        url: initPayment.authorizationUrl,
       };
     } catch (error) {
       this.logger.error(error.message);

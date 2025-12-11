@@ -14,25 +14,30 @@ datasource db {
 }
 
 model User {
-  id                          String     @id @default(uuid())
+  id                          String              @id @default(uuid())
   name                        String
-  email                       String     @unique
+  email                       String              @unique
   phone                       String
   password                    String
   role                        String
   status                      String
-  isFirstTimeUser             Boolean    @default(true)
+  isFirstTimeUser             Boolean             @default(true)
   emailVerificationToke       String?
   phoneNumberVerificationToke String?
-  isEmailVerified             Boolean    @default(false)
-  isPhoneNumberVerified       Boolean    @default(false)
+  isEmailVerified             Boolean             @default(false)
+  isPhoneNumberVerified       Boolean             @default(false)
   passwordResetToken          String?
-  createdAt                   DateTime   @default(now())
-  updatedAt                   DateTime   @default(now())
+  createdAt                   DateTime            @default(now())
+  updatedAt                   DateTime            @default(now())
   reviews                     Reviews[]
   logs                        Logs[]
-  consumers                   Consumer[]
-  vendors                     Vendor[]
+  consumers                   Consumer?
+  vendors                     Vendor?
+  userNotifications           UserNotification[]
+  payments                    Payment?
+  transferRecipient           TransferRecipients?
+  wallet                      Wallet?
+  rider                       Rider?
 }
 
 model Vendor {
@@ -180,6 +185,8 @@ model Order {
   updatedAt        DateTime        @default(now())
   consumer         Consumer        @relation(fields: [userId], references: [userId])
   productId        String?
+  rider            Rider?          @relation(fields: [riderId], references: [id])
+  riderId          String?
 }
 
 model OrderItem {
@@ -190,4 +197,94 @@ model OrderItem {
   price     Float
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+}
+
+model Rider {
+  id            String  @id @default(uuid())
+  orders        Order[]
+  vehicleType   String
+  vehicleNumber String
+  user          User    @relation(fields: [userId], references: [id])
+  userId        String  @unique
+}
+
+model SystemNotification {
+  id                String             @id @default(uuid())
+  title             String
+  message           String
+  createdAt         DateTime           @default(now())
+  userNotifications UserNotification[]
+}
+
+model UserNotification {
+  id                   String             @id @default(uuid())
+  userId               String
+  systemNotificationId String
+  isRead               Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  user                 User               @relation(fields: [userId], references: [id])
+  systemNotification   SystemNotification @relation(fields: [systemNotificationId], references: [id])
+}
+
+model Admin {
+  id         String       @id @default(uuid())
+  name       String       @default("Admin")
+  password   String       @default("admin123")
+  email      String       @unique @default("admin@bexiemart.com")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @default(now())
+  systemLogs SystemLogs[]
+}
+
+model SystemLogs {
+  id        String   @id @default(uuid())
+  action    String
+  details   String
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  timestamp DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  initReference String   @unique
+  status        String   @default("pending")
+  accessCode    String?
+  amount        Float
+  currency      String   @default("GHS")
+  paymentMethod String
+  orderId       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model TransferRecipients {
+  id            String   @id @default(uuid())
+  type          String?
+  currency      String   @default("GHS")
+  name          String?
+  accountNumber String?
+  accountName   String?
+  bankCode      String?
+  bankName      String
+  recipientCode String
+  activeStatus  Boolean  @default(false)
+  recipientId   Int?
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+}
+
+model Wallet {
+  id      String @id @default(uuid())
+  balance Float  @default(0.0)
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  riderId   String   @unique
 }

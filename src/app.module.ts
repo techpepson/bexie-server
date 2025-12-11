@@ -1,3 +1,4 @@
+import { AdminModule } from './admin/admin.module';
 import { PaymentModule } from './payment/payment.module';
 import { PaymentService } from './payment/payment.service';
 import { CartModule } from './cart/cart.module';
@@ -25,9 +26,15 @@ import { PrismaService } from './prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    AdminModule,
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+    }),
     PaymentModule,
     CartModule,
     OrderModule,
