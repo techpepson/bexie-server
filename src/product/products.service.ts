@@ -244,7 +244,7 @@ export class ProductsService {
 
   async getAllProducts(email: string) {
     try {
-      await this.helper.checkRole(email, Role.MERCHANT);
+      await this.helper.checkRole(email, Role.CONSUMER);
       const products = await this.prisma.product.findMany();
       return {
         message: 'Products fetched successfully',

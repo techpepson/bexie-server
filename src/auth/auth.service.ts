@@ -43,6 +43,9 @@ export class AuthService {
 
       const token = this.helpers.randomCodeGen();
 
+      //hash token
+      const hashedToken = await bcrypt.hash(token, 10);
+
       const appName = this.config.get<string>('app.name');
       const appEnv = this.config.get<string>('app.environment');
       const devBaseUrl = this.config.get<string>('app.devBaseUrl');
@@ -50,8 +53,8 @@ export class AuthService {
 
       const verificationUrl =
         appEnv == 'production'
-          ? `${prodBaseUrl}/auth/verify-email?token=${token}&email=${payload.email}`
-          : `${devBaseUrl}/auth/verify-email?token=${token}&email=${payload.email}`;
+          ? `${prodBaseUrl}/auth/verify-email?token=${hashedToken}&email=${payload.email}`
+          : `${devBaseUrl}/auth/verify-email?token=${hashedToken}&email=${payload.email}`;
 
       const mail = await this.helpers.sendMail(
         payload.email,
@@ -73,7 +76,7 @@ export class AuthService {
         //store the token
         await this.prisma.user.create({
           data: {
-            emailVerificationToke: token,
+            emailVerificationToke: hashedToken,
             email: payload.email,
             phone: payload.phone,
             name: payload.name,
@@ -115,10 +118,15 @@ export class AuthService {
         throw new ConflictException('Email already verified.');
       }
 
-      //check if email token is same as provided token
-      if (user.data?.emailVerificationToke !== token) {
+      const dbToken = user.data?.emailVerificationToke;
+
+      const compareToken = await bcrypt.compare(token, dbToken!);
+
+      //compare tokens
+      if (!compareToken) {
         throw new ConflictException('Invalid verification token.');
       }
+
       //update user to verified
       await this.prisma.user.update({
         where: {

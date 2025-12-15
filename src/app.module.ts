@@ -1,3 +1,8 @@
+import { EarningModule } from './earning/earning.module';
+import { EarningService } from './earning/earning.service';
+import { EarningController } from './earning/earning.controller';
+import { WalletModule } from './wallet/wallet.module';
+import { ProcessorModule } from './processors/processor.module';
 import { AdminModule } from './admin/admin.module';
 import { PaymentModule } from './payment/payment.module';
 import { PaymentService } from './payment/payment.service';
@@ -27,13 +32,31 @@ import { JwtService } from '@nestjs/jwt';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { HttpModule } from '@nestjs/axios';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    EarningModule,
+    WalletModule,
+    ConfigModule.forRoot({ isGlobal: true, load: [globalConfig] }),
+    ProcessorModule,
     AdminModule,
     HttpModule.register({
       timeout: 5000,
       maxRedirects: 5,
+    }),
+    BullModule.forRootAsync({
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('REDIS_HOST'),
+          port: config.get<number>('REDIS_PORT'),
+          password: config.get<string>('REDIS_PASSWORD'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.registerQueue({
+      name: 'payment',
     }),
     PaymentModule,
     CartModule,
@@ -41,7 +64,7 @@ import { HttpModule } from '@nestjs/axios';
     ProductsModule,
     HelpersModule,
     AuthModule,
-    ConfigModule.forRoot({ isGlobal: true, load: [globalConfig] }),
+
     MulterModule.register({
       storage: memoryStorage(),
     }),
@@ -68,12 +91,14 @@ import { HttpModule } from '@nestjs/axios';
     }),
   ],
   controllers: [
+    EarningController,
     CartController,
     OrderController,
     ProductsController,
     AppController,
   ],
   providers: [
+    EarningService,
     PaymentService,
     CartService,
     OrderService,

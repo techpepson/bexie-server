@@ -4,6 +4,7 @@ export enum Role {
   ADMIN = 'admin',
   MERCHANT = 'merchant',
   RIDER = 'rider',
+  CONSUMER = 'consumer',
 }
 
 export enum Status {

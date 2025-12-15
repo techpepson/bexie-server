@@ -21,6 +21,7 @@ export class PaymentService {
     email: string,
     amount: number,
     paymentChannel: PaymentMethod,
+    displayName: string,
   ) {
     try {
       let channel: any;
@@ -42,11 +43,15 @@ export class PaymentService {
           channel = 'mobile_money';
           break;
       }
+
+      const metadata = { custom_fields: [{ display_name: displayName }] };
+
       //params for payment gateway
       const params = {
         email,
         amount: amount * 100, //convert to kobo
         channel: channel,
+        metadata,
       };
 
       //options for http request

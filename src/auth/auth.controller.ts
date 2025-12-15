@@ -1,10 +1,3 @@
-/*
-Comprehensive AuthController
-Provides REST endpoints for registration, email verification, login,
-password reset token requests, and token verification. Validation is applied
-via class-validator and Nest's ValidationPipe.
-*/
-
 import {
   Body,
   Controller,

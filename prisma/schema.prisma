@@ -51,14 +51,17 @@ model Vendor {
 }
 
 model Consumer {
-  id        String            @id @unique @default(uuid())
-  user      User              @relation(fields: [userId], references: [id])
-  userId    String            @unique
-  watched   RecentlyWatched[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @default(now())
-  cart      Cart[]
-  orders    Order[]
+  id             String            @id @unique @default(uuid())
+  user           User              @relation(fields: [userId], references: [id])
+  userId         String            @unique
+  watched        RecentlyWatched[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @default(now())
+  cart           Cart[]
+  orders         Order[]
+  earnings       Earning?
+  totalReferrals Int               @default(0)
+  referralCode   String            @unique
 }
 
 model Product {
@@ -179,6 +182,7 @@ model Order {
   deliveryOptionId String?
   paymentMethod    String
   paymentStatus    String
+  referralCode     String?
   items            OrderItem[]
   status           String
   createdAt        DateTime        @default(now())
@@ -200,12 +204,13 @@ model OrderItem {
 }
 
 model Rider {
-  id            String  @id @default(uuid())
+  id            String    @id @default(uuid())
   orders        Order[]
   vehicleType   String
   vehicleNumber String
-  user          User    @relation(fields: [userId], references: [id])
-  userId        String  @unique
+  user          User      @relation(fields: [userId], references: [id])
+  userId        String    @unique
+  earnings      Earning[]
 }
 
 model SystemNotification {
@@ -253,7 +258,7 @@ model Payment {
   amount        Float
   currency      String   @default("GHS")
   paymentMethod String
-  orderId       String
+  orderId       String?  @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
   userId        String   @unique
@@ -279,12 +284,23 @@ model TransferRecipients {
 }
 
 model Wallet {
-  id      String @id @default(uuid())
-  balance Float  @default(0.0)
-  userId  String @unique
-  user    User   @relation(fields: [userId], references: [id])
-
+  id        String   @id @default(uuid())
+  balance   Float    @default(0.0)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  riderId   String   @unique
+}
+
+model Earning {
+  id                String    @id @default(uuid())
+  totalAmount       Float     @default(0.0)
+  pendingCommission Float     @default(0.0)
+  totalWithdrawn    Float     @default(0.0)
+  rider             Rider?    @relation(fields: [riderId], references: [id])
+  riderId           String?
+  consumerId        String?   @unique
+  consumer          Consumer? @relation(fields: [consumerId], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
 }
