@@ -27,7 +27,7 @@ export class AppProcessor extends WorkerHost {
         );
 
         //check if the job was is successful
-        if (job.returnvalue && result) {
+        if (result.status === 'success') {
           this.logger.log(
             `Payment initialization successful for job ${job.id}`,
           );
@@ -37,6 +37,33 @@ export class AppProcessor extends WorkerHost {
             authorizationUrl: result.authorizationUrl,
             reference: result.reference,
             accessCode: result.accessCode,
+            status: result.status,
+          };
+        }
+      }
+
+      if (job.name === 'initiate-transfer') {
+        const { amount, recipient, reason } = job.data;
+
+        const result = await this.paymentService.initiateTransfer(
+          amount,
+          recipient,
+          reason,
+        );
+
+        //check if the job was is successful
+        if (result.status === 'success') {
+          this.logger.log(
+            `Transfer initialization successful for job ${job.id}`,
+          );
+
+          //send the return value to the client
+          return {
+            message: 'Transfer initiated successfully',
+            amount: result.amount,
+            transferCode: result.transferCode,
+            currency: result.currency,
+            reason: result.reason,
             status: result.status,
           };
         }

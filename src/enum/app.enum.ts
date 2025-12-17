@@ -7,8 +7,21 @@ export enum Role {
   CONSUMER = 'consumer',
 }
 
+export enum currency {
+  USD = 'USD',
+  EUR = 'EUR',
+  GBP = 'GBP',
+  NGN = 'NGN',
+  GHS = 'GHS',
+  KES = 'KES',
+  ZAR = 'ZAR',
+}
+
 export enum Status {
   ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
   SUSPENDED = 'suspended',
   PENDING = 'pending',
 }

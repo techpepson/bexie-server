@@ -117,6 +117,26 @@ export class PaymentController {
                 },
               },
             });
+
+            //update the user wallet with the commission earned
+            const userWallet = await this.prisma.wallet.findUnique({
+              where: {
+                userId: consumer.userId,
+              },
+            });
+
+            if (userWallet) {
+              await this.prisma.wallet.update({
+                where: {
+                  id: userWallet.id,
+                },
+                data: {
+                  balance: {
+                    increment: commission,
+                  },
+                },
+              });
+            }
           } else {
             await this.prisma.earning.create({
               data: {
@@ -125,6 +145,26 @@ export class PaymentController {
                 consumerId: consumer.id,
               },
             });
+
+            //u[pdate the user wallet with the commission earned
+            const userWallet = await this.prisma.wallet.findUnique({
+              where: {
+                userId: consumer.userId,
+              },
+            });
+
+            if (userWallet) {
+              await this.prisma.wallet.update({
+                where: {
+                  id: userWallet.id,
+                },
+                data: {
+                  balance: {
+                    increment: commission,
+                  },
+                },
+              });
+            }
           }
         } else {
           console.log('Send failure of verification mail and remove order');
@@ -171,12 +211,14 @@ export class PaymentController {
           });
 
           //update payment status
-          await this.prisma.payment.update({
-            where: {
-              id: payment.id,
-            },
+          await this.prisma.payment.create({
             data: {
               status: PaymentStatus.COMPLETED,
+              amount: payment.amount,
+              userId: payment.userId,
+              currency: 'GHS',
+              paymentMethod: payment.paymentMethod,
+              initReference: payment.initReference,
             },
           });
         }

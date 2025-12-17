@@ -1,0 +1,372 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Account Verified - Bexie</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333333;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 30px;
+        text-align: center;
+        color: #ffffff;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .icon-container {
+        margin: 30px 0 20px;
+      }
+
+      .check-icon {
+        width: 80px;
+        height: 80px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .check-icon svg {
+        width: 40px;
+        height: 40px;
+      }
+
+      .content {
+        padding: 40px 30px;
+      }
+
+      .greeting {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+      }
+
+      .message {
+        font-size: 16px;
+        color: #555555;
+        line-height: 1.8;
+        margin-bottom: 20px;
+      }
+
+      .highlight-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        margin: 25px 0;
+        border-radius: 4px;
+      }
+
+      .highlight-box p {
+        font-size: 15px;
+        color: #333333;
+        margin: 0;
+      }
+
+      .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        padding: 14px 40px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        margin: 20px 0;
+        transition: transform 0.2s;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+      }
+
+      .button-container {
+        text-align: center;
+        margin: 30px 0;
+      }
+
+      .features {
+        margin: 30px 0;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #fafafa;
+        border-radius: 6px;
+      }
+
+      .feature-icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 15px;
+        flex-shrink: 0;
+        color: #667eea;
+      }
+
+      .feature-text {
+        font-size: 14px;
+        color: #555555;
+      }
+
+      .feature-text strong {
+        color: #1a1a1a;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .footer {
+        background-color: #f8f9fa;
+        padding: 30px;
+        text-align: center;
+        border-top: 1px solid #e9ecef;
+      }
+
+      .footer p {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 10px;
+      }
+
+      .footer a {
+        color: #667eea;
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      .social-links {
+        margin-top: 20px;
+      }
+
+      .social-links a {
+        display: inline-block;
+        margin: 0 10px;
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 14px;
+      }
+
+      .divider {
+        height: 1px;
+        background-color: #e9ecef;
+        margin: 30px 0;
+      }
+
+      @media only screen and (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+
+        .header {
+          padding: 30px 20px;
+        }
+
+        .header h1 {
+          font-size: 24px;
+        }
+
+        .content {
+          padding: 30px 20px;
+        }
+
+        .greeting {
+          font-size: 18px;
+        }
+
+        .message {
+          font-size: 15px;
+        }
+
+        .cta-button {
+          padding: 12px 30px;
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class='email-container'>
+      <!-- Header -->
+      <div class='header'>
+        <div class='icon-container'>
+          <div class='check-icon'>
+            <svg
+              fill='#667eea'
+              viewBox='0 0 24 24'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <path
+                d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'
+              />
+            </svg>
+          </div>
+        </div>
+        <h1>Account Verified!</h1>
+        <p>Welcome to Bexie</p>
+      </div>
+
+      <!-- Content -->
+      <div class='content'>
+        <p class='greeting'>Hello {{userName}},</p>
+
+        <p class='message'>
+          Congratulations! Your account has been successfully verified. You now
+          have full access to all Bexie features and can start enjoying our
+          platform.
+        </p>
+
+        <div class='highlight-box'>
+          <p>
+            <strong>📧 Email:</strong>
+            {{userEmail}}<br />
+            <strong>✅ Verified on:</strong>
+            {{verificationDate}}
+          </p>
+        </div>
+
+        <p class='message'>
+          You can now explore all the features available on Bexie. Start
+          shopping, managing your orders, and much more!
+        </p>
+
+        <div class='button-container'>
+          <a href='{{appUrl}}' class='cta-button'>Get Started</a>
+        </div>
+
+        <div class='divider'></div>
+
+        <div class='features'>
+          <h3 style='font-size: 18px; color: #1a1a1a; margin-bottom: 20px;'>What
+            you can do now:</h3>
+
+          <div class='feature-item'>
+            <svg
+              class='feature-icon'
+              fill='currentColor'
+              viewBox='0 0 24 24'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <path
+                d='M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z'
+              />
+            </svg>
+            <div class='feature-text'>
+              <strong>Browse & Shop</strong>
+              Safely list your products and shop from a wide range of
+              categories.
+            </div>
+          </div>
+
+          <div class='feature-item'>
+            <svg
+              class='feature-icon'
+              fill='currentColor'
+              viewBox='0 0 24 24'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <path
+                d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'
+              />
+            </svg>
+            <div class='feature-text'>
+              <strong>Track Orders</strong>
+              Monitor your orders in real-time from purchase to delivery.
+            </div>
+          </div>
+
+          <div class='feature-item'>
+            <svg
+              class='feature-icon'
+              fill='currentColor'
+              viewBox='0 0 24 24'
+              xmlns='http://www.w3.org/2000/svg'
+            >
+              <path
+                d='M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'
+              />
+            </svg>
+            <div class='feature-text'>
+              <strong>Manage Wallet</strong>
+              Add funds, make payments, and track your transaction history
+              securely.
+            </div>
+          </div>
+        </div>
+
+        <div class='divider'></div>
+
+        <p class='message' style='font-size: 14px; color: #6c757d;'>
+          If you have any questions or need assistance, our support team is here
+          to help. Feel free to reach out to us at any time.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class='footer'>
+        <p>Thank you for choosing Bexie!</p>
+        <p>
+          Need help?
+          <a href='{{supportUrl}}'>Contact Support</a>
+        </p>
+
+        <div class='social-links'>
+          <a href='{{facebookUrl}}'>Facebook</a>
+          <a href='{{twitterUrl}}'>Twitter</a>
+          <a href='{{instagramUrl}}'>Instagram</a>
+        </div>
+
+        <p style='margin-top: 20px; font-size: 12px; color: #adb5bd;'>
+          ©
+          {{currentYear}}
+          Bexie. All rights reserved.
+        </p>
+
+        <p style='font-size: 12px; color: #adb5bd;'>
+          You received this email because you recently created an account on
+          Bexie.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

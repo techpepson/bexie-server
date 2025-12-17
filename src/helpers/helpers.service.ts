@@ -132,4 +132,21 @@ export class HelpersService {
       }
     }
   }
+
+  inferMomoProvider(phone: string): 'MTN' | 'VOD' | 'ATL' {
+    try {
+      const prefix = phone.substring(0, 3);
+
+      if (['024', '054', '055', '059'].includes(prefix)) return 'MTN';
+      if (['020', '050'].includes(prefix)) return 'VOD';
+      if (['027', '057', '026', '056'].includes(prefix)) return 'ATL';
+
+      throw new Error('Unsupported mobile money provider');
+    } catch (error) {
+      this.logger.error(error.message);
+      throw new InternalServerErrorException(
+        'Error inferring mobile money provider',
+      );
+    }
+  }
 }

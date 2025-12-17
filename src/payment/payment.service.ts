@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { PaymentMethod } from '../enum/app.enum';
+import { currency, PaymentMethod } from '../enum/app.enum';
 
 @Injectable()
 export class PaymentService {
@@ -140,7 +140,7 @@ export class PaymentService {
         amount: amount * 100, //convert to kobo
         recipient: recipient,
         reason: reason,
-        currency: 'GHS',
+        currency: currency.GHS,
       };
 
       const response = await firstValueFrom(
@@ -227,6 +227,14 @@ export class PaymentService {
       };
     } catch (error) {
       this.logger.error(error);
+      if (error instanceof BadGatewayException) {
+        throw new BadGatewayException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          error?.message ||
+            'An error occurred during transfer recipient creation.',
+        );
+      }
     }
   }
 
@@ -252,6 +260,9 @@ export class PaymentService {
       }; //array of recipients
     } catch (error) {
       this.logger.error(error);
+      throw new InternalServerErrorException(
+        'An error occurred while fetching transfer recipients.',
+      );
     }
   }
 
@@ -288,10 +299,13 @@ export class PaymentService {
       };
     } catch (error) {
       this.logger.error(error);
+      throw new InternalServerErrorException(
+        'An error occurred during transfer recipient update.',
+      );
     }
   }
 
-  async finalizeTransfer(transferCode: string, otp: string) {
+  async finalizeTransfer(transferCode: string, otp?: string) {
     try {
       const headers = {
         Authorization: `Bearer ${this.config.get('PAYSTACK_SECRET_KEY')}`,
@@ -325,6 +339,35 @@ export class PaymentService {
       };
     } catch (error) {
       this.logger.error(error);
+      throw new InternalServerErrorException(
+        'An error occurred during transfer finalization.',
+      );
+    }
+  }
+
+  async listBanks() {
+    try {
+      const headers = {
+        Authorization: `Bearer ${this.config.get('PAYSTACK_SECRET_KEY')}`,
+        'Content-Type': 'application/json',
+      };
+
+      const response = await firstValueFrom(
+        this.httpService.get('https://api.paystack.co/bank', { headers }),
+      );
+
+      if (response.data.status === false) {
+        throw new BadGatewayException('Fetching banks failed.');
+      }
+
+      return {
+        banks: response.data.data,
+      }; //array of banks
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(
+        'An error occurred while fetching banks.',
+      );
     }
   }
 }

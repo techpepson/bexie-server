@@ -138,6 +138,18 @@ export class AuthService {
         },
       });
 
+      const provider = this.helpers.inferMomoProvider(user.data!.phone);
+
+      //create mobile money record for the user
+      await this.prisma.mobileMoney.create({
+        data: {
+          provider: 'Unknown',
+          bankCode: provider,
+          phoneNumber: user.data!.phone,
+          userId: user.data!.id,
+        },
+      });
+
       return {
         message: 'Email verified successfully.',
         success: true,

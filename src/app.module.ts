@@ -1,3 +1,6 @@
+import { UserModule } from './user/user.module';
+import { UserService } from './user/user.service';
+import { UserController } from './user/user.controller';
 import { EarningModule } from './earning/earning.module';
 import { EarningService } from './earning/earning.service';
 import { EarningController } from './earning/earning.controller';
@@ -36,6 +39,7 @@ import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    UserModule,
     EarningModule,
     WalletModule,
     ConfigModule.forRoot({ isGlobal: true, load: [globalConfig] }),
@@ -91,6 +95,7 @@ import { BullModule } from '@nestjs/bullmq';
     }),
   ],
   controllers: [
+    UserController,
     EarningController,
     CartController,
     OrderController,
@@ -98,6 +103,7 @@ import { BullModule } from '@nestjs/bullmq';
     AppController,
   ],
   providers: [
+    UserService,
     EarningService,
     PaymentService,
     CartService,

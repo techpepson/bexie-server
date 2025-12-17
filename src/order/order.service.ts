@@ -176,4 +176,56 @@ export class OrderService {
       }
     }
   }
+
+  async reviewOrder(
+    email: string,
+    orderId: string,
+    rating: number,
+    comment: string,
+  ) {
+    try {
+      const user = await this.helper.fetchUser(email);
+
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      await this.helper.checkRole(email, Role.CONSUMER);
+
+      //check if order exists
+      const order = await this.prisma.order.findUnique({
+        where: {
+          id: orderId,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      //create review
+      const review = await this.prisma.reviews.create({
+        data: {
+          userId: user.data!.id,
+          orderId: order.id,
+          rating,
+          comment,
+        },
+      });
+
+      return {
+        message: 'Review submitted successfully',
+        review,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          error?.message || 'An error occurred while submitting the review.',
+        );
+      }
+    }
+  }
 }
