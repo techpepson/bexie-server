@@ -1,3 +1,7 @@
+import { NotificationModule } from './notifications/notification.module';
+import { NotificationService } from './notifications/notification.service';
+import { NotificationController } from './notifications/notification.controller';
+import { WishlistModule } from './wishlist/wishlist.module';
 import { UserModule } from './user/user.module';
 import { UserService } from './user/user.service';
 import { UserController } from './user/user.controller';
@@ -39,6 +43,8 @@ import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    NotificationModule,
+    WishlistModule,
     UserModule,
     EarningModule,
     WalletModule,
@@ -95,6 +101,7 @@ import { BullModule } from '@nestjs/bullmq';
     }),
   ],
   controllers: [
+    NotificationController,
     UserController,
     EarningController,
     CartController,
@@ -103,6 +110,7 @@ import { BullModule } from '@nestjs/bullmq';
     AppController,
   ],
   providers: [
+    NotificationService,
     UserService,
     EarningService,
     PaymentService,

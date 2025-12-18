@@ -71,6 +71,7 @@ model Consumer {
   earnings       Earning?
   totalReferrals Int               @default(0)
   referralCode   String            @unique
+  wishlists      Wishlist[]
 }
 
 model Product {
@@ -98,6 +99,7 @@ model Product {
   cart             Cart?             @relation(fields: [cartId], references: [id])
   orderId          String?
   orderItems       OrderItem[]
+  wishlists        Wishlist[]
 }
 
 model Shop {
@@ -169,6 +171,8 @@ model RecentlyWatched {
   consumer  Consumer @relation(fields: [userId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
   watchedAt DateTime @default(now())
+
+  @@unique([productId, userId])
 }
 
 model Cart {
@@ -178,6 +182,17 @@ model Cart {
   consumer   Consumer  @relation(fields: [consumerId], references: [userId])
   products   Product[]
   addedAt    DateTime  @default(now())
+}
+
+model Wishlist {
+  id         String   @id @default(uuid())
+  consumerId String
+  productId  String
+  consumer   Consumer @relation(fields: [consumerId], references: [userId])
+  product    Product  @relation(fields: [productId], references: [id])
+  addedAt    DateTime @default(now())
+
+  @@unique([consumerId, productId])
 }
 
 model Order {
@@ -232,7 +247,7 @@ model SystemNotification {
 
 model UserNotification {
   id                   String             @id @default(uuid())
-  userId               String
+  userId               String             @unique
   systemNotificationId String
   isRead               Boolean            @default(false)
   createdAt            DateTime           @default(now())

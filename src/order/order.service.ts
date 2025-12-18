@@ -228,4 +228,42 @@ export class OrderService {
       }
     }
   }
+
+  async getConsumerReviews(email: string) {
+    try {
+      const user = await this.helper.fetchUser(email);
+
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      const notifications = await this.prisma.user.findUnique({
+        where: {
+          id: user.data?.id,
+        },
+        select: {
+          reviews: true,
+        },
+      });
+
+      return notifications;
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('Model not found');
+      } else {
+        throw new InternalServerErrorException(
+          'An internal server error occurred',
+        );
+      }
+    }
+  }
+
+  async fetchVendorOrders(email: string) {
+    try {
+      const user = await this.helper.fetchUser(email);
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }
