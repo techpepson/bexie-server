@@ -102,7 +102,7 @@ export class OrderService {
         error instanceof NotFoundException ||
         error instanceof PreconditionFailedException
       ) {
-        throw error;
+        throw new Error(error.message);
       } else {
         throw new InternalServerErrorException(
           error?.message || 'An error occurred while placing the order.',
@@ -132,9 +132,7 @@ export class OrderService {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          'An error occurred while checking job status',
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -250,11 +248,9 @@ export class OrderService {
     } catch (error) {
       this.logger.error(error);
       if (error instanceof NotFoundException) {
-        throw new NotFoundException('Model not found');
+        throw new NotFoundException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          'An internal server error occurred',
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -262,6 +258,101 @@ export class OrderService {
   async fetchVendorOrders(email: string) {
     try {
       const user = await this.helper.fetchUser(email);
+
+      //check if user exists
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      //check if user is a vendor
+      await this.helper.checkRole(email, Role.VENDOR);
+
+      const verndor = await this.prisma.vendor.findUnique({
+        where: {
+          userId: user.data!.id,
+        },
+      });
+
+      if (!verndor) {
+        throw new NotFoundException('Vendor profile not found');
+      }
+
+      const orders = await this.prisma.order.findMany({
+        where: {
+          items: {
+            some: {
+              product: {
+                shop: {
+                  vendorId: verndor.userId,
+                },
+              },
+            },
+          },
+        },
+        include: {
+          items: true,
+          deliveryOption: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return orders;
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async fetchVendorEarnings(email: string) {
+    try {
+      const user = await this.helper.fetchUser(email);
+
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      const vendor = await this.prisma.vendor.findUnique({
+        where: {
+          userId: user.data!.id,
+        },
+      });
+
+      //check if vendor exists
+      if (!vendor) {
+        throw new NotFoundException('Vendor does not exist');
+      }
+
+      const orders = await this.prisma.order.findMany({
+        where: {
+          items: {
+            some: {
+              product: {
+                shop: {
+                  vendorId: vendor.userId,
+                },
+              },
+            },
+          },
+          status: OrderStatus.DELIVERED,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      //calculate the total earnings for the vendor
+      const dueTotal = orders.reduce((total, currentOrder) => {
+        const unitPrice = currentOrder.totalPrice;
+        return total + unitPrice;
+      }, 0);
+
+      return dueTotal;
     } catch (error) {
       this.logger.error(error);
     }
