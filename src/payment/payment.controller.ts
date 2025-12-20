@@ -31,224 +31,142 @@ export class PaymentController {
       .update(JSON.stringify(req.body))
       .digest('hex');
 
-    const payload: any = req.body;
-
-    // Verify Paystack signature
     if (hash !== req.headers['x-paystack-signature']) {
       return res.status(400).send('Invalid signature');
     }
 
-    // Process only charge.success events
-    if (payload?.event === 'charge.success') {
-      const reference = payload.data.reference;
-      const verifyPayment = await this.paymentService.verifyPayment(reference);
+    const payload: any = req.body;
 
-      if (
-        verifyPayment.status === true &&
-        payload.metadata?.custom_fields?.[0]?.display_name ===
-          'ORDER_PAYMENT' &&
-        reference
-      ) {
-        const payment = await this.prisma.payment.findUnique({
-          where: {
-            initReference: reference,
-          },
+    if (payload?.event !== 'charge.success') {
+      return res.status(200).send('Ignored');
+    }
+
+    const reference = payload.data.reference;
+    const verifyPayment = await this.paymentService.verifyPayment(reference);
+
+    if (!verifyPayment.status || !reference) {
+      return res.status(400).send('Payment not verified');
+    }
+
+    const payment = await this.prisma.payment.findUnique({
+      where: { initReference: reference },
+    });
+
+    if (!payment || !payment.orderId) {
+      return res.status(404).send('Payment or order not found');
+    }
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: payment.orderId },
+      include: {
+        items: true,
+        consumer: true,
+      },
+    });
+
+    if (!order) return res.status(404).send('Order not found');
+
+    // 🛡 Prevent double processing
+    if (order.paymentStatus === 'completed') {
+      return res.status(200).send('Already processed');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // ✅ Update payment
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.COMPLETED },
+      });
+
+      // ✅ Update order
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.PROCESSING,
+          paymentStatus: PaymentStatus.COMPLETED,
+        },
+      });
+
+      // =========================
+      // 🎁 Referral commission
+      // =========================
+      if (order.referralCode) {
+        const consumer = await tx.consumer.findUnique({
+          where: { referralCode: order.referralCode },
         });
 
-        const order = await this.prisma.order.findUnique({
-          where: {
-            id: payment!.orderId || undefined,
-          },
-        });
-
-        if (!order) {
-          return res.status(404).send('Order not found');
-        }
-
-        //update payment status
-        await this.prisma.payment.update({
-          where: {
-            id: payment!.id,
-          },
-          data: {
-            status: PaymentStatus.COMPLETED,
-          },
-        });
-
-        //update order payment status
-        await this.prisma.order.update({
-          where: {
-            id: order.id,
-          },
-          data: {
-            status: OrderStatus.PROCESSING,
-            paymentStatus: PaymentStatus.COMPLETED,
-          },
-        });
-
-        //find and update referral code if exists
-        const consumer = await this.prisma.consumer.findUnique({
-          where: {
-            referralCode: order.referralCode || '',
-          },
-        });
-
-        //update the consumer's earnings if referral code exists
         if (consumer) {
-          const earning = await this.prisma.earning.findUnique({
-            where: {
-              consumerId: consumer.id,
-            },
-          });
+          const commission = (order.totalPrice * 2) / 100;
 
-          const commission = (order.totalPrice * 2) / 100; //2% commission
+          const earning = await tx.earning.findUnique({
+            where: { consumerId: consumer.id },
+          });
 
           if (earning) {
-            await this.prisma.earning.update({
-              where: {
-                id: earning.id,
-              },
+            await tx.earning.update({
+              where: { id: earning.id },
               data: {
-                totalAmount: {
-                  increment: commission,
-                },
-                pendingCommission: {
-                  increment: commission,
-                },
+                totalAmount: { increment: commission },
+                pendingCommission: { increment: commission },
               },
             });
-
-            //update the user wallet with the commission earned
-            const userWallet = await this.prisma.wallet.findUnique({
-              where: {
-                userId: consumer.userId,
-              },
-            });
-
-            if (userWallet) {
-              await this.prisma.wallet.update({
-                where: {
-                  id: userWallet.id,
-                },
-                data: {
-                  balance: {
-                    increment: commission,
-                  },
-                },
-              });
-            }
           } else {
-            await this.prisma.earning.create({
+            await tx.earning.create({
               data: {
+                consumerId: consumer.id,
                 totalAmount: commission,
                 pendingCommission: commission,
-                consumerId: consumer.id,
               },
             });
-
-            //u[pdate the user wallet with the commission earned
-            const userWallet = await this.prisma.wallet.findUnique({
-              where: {
-                userId: consumer.userId,
-              },
-            });
-
-            if (userWallet) {
-              await this.prisma.wallet.update({
-                where: {
-                  id: userWallet.id,
-                },
-                data: {
-                  balance: {
-                    increment: commission,
-                  },
-                },
-              });
-            }
-          }
-        } else {
-          console.log('Send failure of verification mail and remove order');
-        }
-
-        //webhook for wallet top-up
-        if (
-          payload.data.metadata?.custom_fields?.[0]?.display_name ===
-            'WALLET_TOPUP' &&
-          verifyPayment.status == true &&
-          reference
-        ) {
-          const payment = await this.prisma.payment.findUnique({
-            where: {
-              initReference: reference,
-            },
-          });
-
-          if (!payment) {
-            return res.status(404).send('Payment not found');
           }
 
-          //find the owner of teh payment
-          const userWallet = await this.prisma.wallet.findUnique({
-            where: {
-              userId: payment.userId,
-            },
-          });
-
-          if (!userWallet) {
-            return res.status(404).send('User wallet not found');
-          }
-
-          //update wallet balance
-          await this.prisma.wallet.update({
-            where: {
-              id: userWallet.id,
-            },
-            data: {
-              balance: {
-                increment: payment.amount,
-              },
-            },
-          });
-
-          //update payment status
-          await this.prisma.payment.create({
-            data: {
-              status: PaymentStatus.COMPLETED,
-              amount: payment.amount,
-              userId: payment.userId,
-              currency: 'GHS',
-              paymentMethod: payment.paymentMethod,
-              initReference: payment.initReference,
-            },
+          await tx.wallet.upsert({
+            where: { userId: consumer.userId },
+            update: { balance: { increment: commission } },
+            create: { userId: consumer.userId, balance: commission },
           });
         }
-
-        return res.status(200).send('success');
       }
-    }
 
-    if (payload?.event === 'paymentrequest.success') {
-      //send an email to the user for their application
+      // =========================
+      // 🛒 Vendor payouts
+      // =========================
+      const orderItems = order.items;
 
-      return res.status(200).send('success');
-    }
+      const orderProducts = await tx.product.findMany({
+        where: {
+          id: { in: orderItems.map((i) => i.productId) },
+        },
+        include: { shop: true },
+      });
 
-    if (payload?.event === 'transfer.success') {
-      //send an email to the user for their application
+      // 🗺 Map productId → vendorId
+      const productVendorMap = new Map<string, string>(
+        orderProducts.map((p) => [p.id, p.shop.vendorId]),
+      );
 
-      return res.status(200).send('success');
-    }
+      // 💰 Accumulate totals per vendor
+      const vendorTotals: Record<string, number> = {};
 
-    if (payload?.event === 'transfer.failed') {
-      //send an email to the user for their application
+      for (const item of orderItems) {
+        const vendorId = productVendorMap.get(item.productId);
+        if (!vendorId) continue;
 
-      return res.status(400).send('success');
-    }
+        const amount = item.price * item.quantity;
 
-    if (payload?.event === 'transfer.reversed') {
-      //send an email to the user for their application
+        vendorTotals[vendorId] = (vendorTotals[vendorId] || 0) + amount;
+      }
 
-      return res.status(200).send('success');
-    }
+      // 🏦 Update each vendor wallet
+      for (const [vendorId, amount] of Object.entries(vendorTotals)) {
+        await tx.wallet.upsert({
+          where: { userId: vendorId },
+          update: { balance: { increment: amount } },
+          create: { userId: vendorId, balance: amount },
+        });
+      }
+    });
+
+    return res.status(200).send('success');
   }
 }

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -57,6 +51,7 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
   shopId    String
+  coupons   Coupon[]
 }
 
 model Consumer {
@@ -75,13 +70,12 @@ model Consumer {
 }
 
 model Product {
-  id               String            @id @default(uuid())
-  name             String
-  description      String
-  color            String
-  images           String[]
-  category         String
-  discount         Discount?         @relation(fields: [discountId], references: [id])
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  color       String
+  images      String[]
+
   shop             Shop              @relation(fields: [shopId], references: [id])
   discountType     String?
   discountAmount   Float?
@@ -130,17 +124,21 @@ model DeliveryOption {
   productId String?
 }
 
-model Discount {
-  id          String    @id @default(uuid())
-  code        String?   @unique
-  description String?
-  type        String    @default("percentage")
-  amount      Float     @default(0.0)
-  validFrom   DateTime?
-  validTo     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now())
-  products    Product[]
+model Coupon {
+  id                String   @id @default(uuid())
+  title             String
+  code              String   @unique
+  discountType      String // "percentage" or "fixed_amount"
+  discountAmount    Float
+  validUntil        DateTime
+  usageLimit        Int
+  currentUsage      Int      @default(0)
+  description       String?
+  firstPurchaseOnly Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+  vendorId          String?
+  vendor            Vendor?  @relation(fields: [vendorId], references: [userId])
 }
 
 model Reviews {
@@ -204,7 +202,7 @@ model Order {
   deliveryOption   DeliveryOption? @relation(fields: [deliveryOptionId], references: [id])
   deliveryOptionId String?
   paymentMethod    String
-  paymentStatus    String
+  paymentStatus    String //this is payment to vendors
   referralCode     String?
   items            OrderItem[]
   status           String

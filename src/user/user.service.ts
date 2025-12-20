@@ -17,7 +17,7 @@ export class UserService {
       const user = await this.helper.fetchUser(email);
 
       //check role
-      await this.helper.checkRole(email, Role.CONSUMER);
+      await this.helper.checkRole(email, Role.CONSUMER || Role.VENDOR);
 
       //check if user exists
       if (!user.exists) {
@@ -67,7 +67,7 @@ export class UserService {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
       } else {
-        throw new Error('Internal server error');
+        throw new Error(error.message);
       }
     }
   }
@@ -93,29 +93,6 @@ export class UserService {
       return {
         message: 'User notifications fetched successfully',
         data: notifications,
-      };
-    } catch (error) {
-      this.logger.error(error.message);
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);
-      } else {
-        throw new Error('Internal server error');
-      }
-    }
-  }
-
-  async getUserDetails(email: string) {
-    try {
-      const user = await this.helper.fetchUser(email);
-
-      //check if user exists
-      if (!user.exists) {
-        throw new NotFoundException('User not found');
-      }
-
-      return {
-        message: 'User details fetched successfully',
-        data: user.data,
       };
     } catch (error) {
       this.logger.error(error.message);

@@ -103,7 +103,6 @@ export class ProductsService {
               description: payload.description,
               color: payload.color,
               images: uploadedImages.map((img) => img.publicId), // <- save uploaded file URLs here later
-              category: payload.category,
               price: payload.price,
               quantity: payload.quantity,
               status: ProductStatus.PENDING,
@@ -149,10 +148,7 @@ export class ProductsService {
         throw new ForbiddenException(error.message);
       } else if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
-      } else
-        throw new InternalServerErrorException(
-          'An internal server error occurred adding product',
-        );
+      } else throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -178,7 +174,8 @@ export class ProductsService {
         throw new NotFoundException('Product not found');
       }
 
-      const updatedProduct = await this.prisma.product.update({
+      //update the products
+      await this.prisma.product.update({
         where: { id: productId },
         data: {
           ...payload,
@@ -187,7 +184,6 @@ export class ProductsService {
 
       return {
         message: 'Product updated successfully',
-        product: updatedProduct,
       };
     } catch (error) {
       this.logger.error(error);
@@ -196,9 +192,7 @@ export class ProductsService {
       } else if (error instanceof ForbiddenException) {
         throw new ForbiddenException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          'An internal server error occurred updating product',
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -235,9 +229,7 @@ export class ProductsService {
       } else if (error instanceof ForbiddenException) {
         throw new ForbiddenException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          'An internal server error occurred deleting product',
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -245,16 +237,19 @@ export class ProductsService {
   async getAllProducts(email: string) {
     try {
       await this.helper.checkRole(email, Role.CONSUMER);
-      const products = await this.prisma.product.findMany();
+      const products = await this.prisma.product.findMany({
+        where: {
+          stockStatus: ProductStatus.IN_STOCK,
+          status: ProductStatus.APPROVED,
+        },
+      });
       return {
         message: 'Products fetched successfully',
         products,
       };
     } catch (error) {
       this.logger.error(error);
-      throw new InternalServerErrorException(
-        'An internal server error occurred fetching products',
-      );
+      throw new InternalServerErrorException(error.message);
     }
   }
 
@@ -270,17 +265,18 @@ export class ProductsService {
 
       const vendor = await this.prisma.vendor.findUnique({
         where: { userId: user.data!.id },
-        include: { shop: { include: { products: true } } },
       });
 
-      if (!vendor?.shop) {
-        throw new NotFoundException('Shop not created for vendor.');
-      }
+      //return products to the vendor
+      const products = await this.prisma.product.findMany({
+        where: {
+          shop: {
+            vendorId: vendor?.userId,
+          },
+        },
+      });
 
-      return {
-        message: 'Vendor products fetched successfully',
-        products: vendor.shop.products,
-      };
+      return products;
     } catch (error) {
       this.logger.error(error);
       if (error instanceof NotFoundException) {
@@ -288,9 +284,7 @@ export class ProductsService {
       } else if (error instanceof ForbiddenException) {
         throw new ForbiddenException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          'An internal server error occurred fetching vendor products',
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }

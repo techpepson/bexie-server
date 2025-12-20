@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -96,9 +97,8 @@ export class HelpersService {
 
       const ext = originalName.split('.').pop();
 
-      //check if file has a valid extension
       if (!ext) {
-        throw new BadRequestException('Extension not found for file');
+        throw new NotFoundException('Extension not found');
       }
 
       //check if buffer exists
@@ -107,7 +107,7 @@ export class HelpersService {
       }
       //check if extension is in allowed extensions
       if (!allowedExtensions.includes(ext)) {
-        throw new BadRequestException('Unsupported extension received');
+        throw new NotAcceptableException('Unsupported extension received');
       }
 
       const base64String = Buffer.from(file.buffer).toString('base64');
@@ -147,6 +147,40 @@ export class HelpersService {
       throw new InternalServerErrorException(
         'Error inferring mobile money provider',
       );
+    }
+  }
+
+  async createUserLogs(
+    email: string,
+    message: string,
+    createdAt?: Date,
+    description?: string,
+  ) {
+    try {
+      const user = await this.fetchUser(email);
+
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      const logs = await this.prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          logs: {
+            create: {
+              title: message,
+              description:
+                description ?? `Log created on ${createdAt?.toString()}`,
+            },
+          },
+        },
+      });
+
+      return logs;
+    } catch (error) {
+      this.logger.error(error);
     }
   }
 }
