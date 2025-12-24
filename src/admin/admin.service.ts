@@ -10,7 +10,15 @@ import {
 } from '@nestjs/common';
 import { HelpersService } from '../helpers/helpers.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { currency, PaymentMethod, Role, Status } from '../enum/app.enum';
+import {
+  AdminActionOnVendor,
+  currency,
+  OrderStatus,
+  PaymentMethod,
+  RiderStatus,
+  Role,
+  Status,
+} from '../enum/app.enum';
 import { ConfigService } from '@nestjs/config';
 import { PaymentService } from '../payment/payment.service';
 
@@ -38,7 +46,7 @@ export class AdminService {
       }
 
       //check if user is an admin
-      await this.helper.checkRole(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
 
       //fetch vendor
       const vendor = await this.prisma.vendor.findUnique({
@@ -94,8 +102,8 @@ export class AdminService {
 
       //create transfer recipient logic here
       const recipient = await this.payment.createTransferRecipient(
-        mobileMoney!.phoneNumber,
-        mobileMoney!.bankCode,
+        mobileMoney.phoneNumber,
+        mobileMoney.bankCode,
         vendor.user.name,
         PaymentMethod.MOBILE_MONEY,
       );
@@ -122,7 +130,205 @@ export class AdminService {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
       } else {
-        throw new InternalServerErrorException('Internal server error');
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getAllVendors(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const vendors = await this.prisma.vendor.findMany({
+        include: {
+          user: true,
+          shop: true,
+          coupons: true,
+        },
+      });
+      return vendors;
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getActiveUsers(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const users = await this.prisma.user.findMany({
+        where: {
+          status: Status.ACTIVE,
+        },
+      });
+      return users;
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getAllUsers(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const users = await this.prisma.user.findMany();
+      return users;
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getActiveRiders(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const riders = await this.prisma.rider.findMany({
+        where: {
+          status: RiderStatus.AVAILABLE,
+        },
+        include: {
+          user: true,
+        },
+      });
+      return riders;
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getAllOrders(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const orders = await this.prisma.order.findMany({
+        where: {
+          status: OrderStatus.DELIVERED,
+        },
+        include: {
+          consumer: {
+            include: {
+              user: true,
+            },
+          },
+          rider: {
+            include: {
+              user: true,
+            },
+          },
+          items: true,
+          reviews: true,
+        },
+      });
+      return orders;
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async performActionOnVendor(
+    email: string,
+    action: AdminActionOnVendor,
+    vendorId: string,
+  ) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      if (action === AdminActionOnVendor.APPROVE) {
+        const vendor = await this.prisma.vendor.update({
+          where: { id: vendorId },
+          data: { status: Status.APPROVED },
+        });
+        return {
+          message: 'Vendor approved successfully',
+          vendor,
+        };
+      } else if (action === AdminActionOnVendor.SUSPEND) {
+        const vendor = await this.prisma.vendor.update({
+          where: { id: vendorId },
+          data: { status: Status.SUSPENDED },
+        });
+        return {
+          message: 'Vendor suspended successfully',
+          vendor,
+        };
+      } else if (action === AdminActionOnVendor.REMOVE) {
+        const vendor = await this.prisma.vendor.delete({
+          where: { id: vendorId },
+        });
+        return {
+          message: 'Vendor removed successfully',
+          vendor,
+        };
+      }
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async performActionOnConsumer(
+    email: string,
+    action: AdminActionOnVendor,
+    consumerId: string,
+  ) {
+    try {
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      if (action === AdminActionOnVendor.APPROVE) {
+        const vendor = await this.prisma.user.update({
+          where: { id: consumerId },
+          data: { status: Status.ACTIVE },
+        });
+        return {
+          message: 'User approved successfully',
+          vendor,
+        };
+      } else if (action === AdminActionOnVendor.SUSPEND) {
+        const vendor = await this.prisma.user.update({
+          where: { id: consumerId },
+          data: { status: Status.SUSPENDED },
+        });
+        return {
+          message: 'User suspended successfully',
+          vendor,
+        };
+      } else if (action === AdminActionOnVendor.REMOVE) {
+        const vendor = await this.prisma.user.delete({
+          where: { id: consumerId },
+        });
+        return {
+          message: 'User removed successfully',
+          vendor,
+        };
+      }
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
       }
     }
   }

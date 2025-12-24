@@ -1,10 +1,7 @@
-/*
-https://docs.nestjs.com/providers#services
-*/
-
 import {
   BadGatewayException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -15,9 +12,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto, RegisterDto } from '../dto/auth.dto';
 import { HelpersService } from '../helpers/helpers.service';
 import bcrypt from 'bcrypt';
-import { PasswordResetChannel, Status } from '../enum/app.enum';
+import { PasswordResetChannel, Role, Status } from '../enum/app.enum';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { AdminDto } from '../dto/admin.dto';
 
 @Injectable()
 export class AuthService {
@@ -97,9 +95,7 @@ export class AuthService {
       } else if (error instanceof BadGatewayException) {
         throw new BadGatewayException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          `An error occurred during registration. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -135,6 +131,7 @@ export class AuthService {
         data: {
           isEmailVerified: true,
           emailVerificationToke: null,
+          status: Status.ACTIVE,
         },
       });
 
@@ -159,9 +156,7 @@ export class AuthService {
       if (error instanceof ConflictException) {
         throw new ConflictException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          `An error occurred during email verification. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -220,9 +215,7 @@ export class AuthService {
       if (error instanceof ConflictException) {
         throw new ConflictException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          `An error occurred during login. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -251,9 +244,7 @@ export class AuthService {
       } else if (error instanceof ConflictException) {
         throw new ConflictException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          `An error occurred while checking password. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -312,9 +303,7 @@ export class AuthService {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(error.message);
       } else {
-        throw new InternalServerErrorException(
-          `An error occurred while requesting password reset token. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
     }
   }
@@ -353,10 +342,112 @@ export class AuthService {
         throw new UnauthorizedException(error.message);
       } else {
         this.logger.error(`Password reset error: ${error}`);
-        throw new InternalServerErrorException(
-          `An error occurred while resetting password. Please try again.`,
-        );
+        throw new InternalServerErrorException(error.message);
       }
+    }
+  }
+
+  async loginAdmin(email: string, payload: Partial<AdminDto>) {
+    try {
+      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
+      const admin = await this.prisma.admin.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      //check if admin exists
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      if (!payload.password) {
+        throw new NotFoundException('Password not provided');
+      }
+
+      //unhash password
+      const isPasswordMatch = await bcrypt.compare(
+        payload.password,
+        admin.password,
+      );
+
+      //sign the user with jwt
+      const token = this.jwt.sign({
+        id: admin.id,
+        email: admin.email,
+      });
+
+      //check if password match
+      if (!isPasswordMatch) {
+        throw new ForbiddenException('Passwords do not match');
+      }
+
+      return {
+        message: 'Login successful',
+        token,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async createAdmin(email: string, payload: AdminDto) {
+    try {
+      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN);
+
+      //check if user is an admin
+      const admin = await this.prisma.admin.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      const hashedPass = await bcrypt.hash(payload.password, 10);
+
+      const appName = this.config.get<string>('app.name');
+
+      await this.prisma.admin.create({
+        data: {
+          email: payload.email,
+          password: hashedPass,
+          name: payload.name,
+          role: payload.role,
+        },
+      });
+
+      //send an email to the admin, informing them of their addition to the role
+      await this.helpers.sendMail(
+        payload.email,
+        {
+          name: payload.name,
+          email: payload.email,
+          password: payload.password,
+          role: payload.role,
+          appName,
+        },
+        'admin-info',
+        `${appName} - Admin Account Created`,
+      );
+
+      return {
+        message: 'Admin account created successfully.',
+        admin,
+      };
+    } catch (error) {
+      this.logger.error(`Create admin error: ${error}`);
+      throw new InternalServerErrorException(
+        'An error occurred while creating admin account. Please try again.',
+      );
     }
   }
 }

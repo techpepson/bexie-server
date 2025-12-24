@@ -123,3 +123,45 @@ export enum DiscountType {
   PERCENTAGE = 'percentage',
   FIXED_AMOUNT = 'fixed_amount',
 }
+
+export enum RiderStatus {
+  AVAILABLE = 'available',
+  UNAVAILABLE = 'unavailable',
+  ON_DELIVERY = 'on_delivery',
+  SUSPENDED = 'suspended',
+  PENDING = 'pending',
+}
+
+export enum NotificationType {
+  ORDER_UPDATE = 'order_update',
+  PROMOTIONS = 'promotions',
+  SYSTEM_ALERTS = 'system_alerts',
+}
+
+export enum NotificationChannel {
+  EMAIL = 'email',
+  SMS = 'sms',
+  PUSH_NOTIFICATION = 'push_notification',
+}
+
+export enum ReviewRating {
+  ONE_STAR = 1,
+  TWO_STAR = 2,
+  THREE_STAR = 3,
+  FOUR_STAR = 4,
+  FIVE_STAR = 5,
+}
+
+export enum CouponStatus {
+  ACTIVE = 'active',
+  EXPIRED = 'expired',
+  REDEEMED = 'redeemed',
+  INACTIVE = 'inactive',
+}
+
+export enum AdminActionOnVendor {
+  SUSPEND = 'suspend',
+  ACTIVATE = 'activate',
+  APPROVE = 'approve',
+  REMOVE = 'remove',
+}

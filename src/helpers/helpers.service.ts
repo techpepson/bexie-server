@@ -14,6 +14,7 @@ import ShortUniqueId from 'short-unique-id';
 import { ConfigService } from '@nestjs/config';
 import { MailerService } from '@nestjs-modules/mailer';
 import cloudinary from '../config/cloudinary.config';
+import { Admin } from '../../generated/prisma/browser';
 
 @Injectable()
 export class HelpersService {
@@ -46,6 +47,28 @@ export class HelpersService {
     }
   }
 
+  async fetchAdmin(
+    email: string,
+  ): Promise<{ exists: boolean; data: Admin | null }> {
+    const admin = await this.prisma.admin.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!admin) {
+      return {
+        exists: false,
+        data: admin,
+      };
+    } else {
+      return {
+        exists: true,
+        data: admin,
+      };
+    }
+  }
+
   async sendMail(
     recipient: string,
     context: any,
@@ -73,10 +96,27 @@ export class HelpersService {
   async checkRole(email: string, expectedRole: Role): Promise<User> {
     const user = await this.fetchUser(email);
 
+    if (!user.exists) {
+      throw new NotFoundException('User not found');
+    }
+
     if (user.data?.role !== expectedRole) {
       throw new ForbiddenException('Access to service denied');
     }
     return user.data;
+  }
+
+  async checkAdmin(email: string, expectedRole: Role): Promise<Admin> {
+    const admin = await this.fetchAdmin(email);
+
+    if (!admin.exists) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    if (admin.data?.role !== expectedRole) {
+      throw new ForbiddenException('Access to service denied');
+    }
+    return admin.data;
   }
 
   randomCodeGen() {

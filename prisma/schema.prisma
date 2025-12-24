@@ -44,7 +44,7 @@ model User {
 
 model Vendor {
   id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @unique
   status    String   @default("pending")
   shop      Shop?
@@ -56,7 +56,7 @@ model Vendor {
 
 model Consumer {
   id             String            @id @unique @default(uuid())
-  user           User              @relation(fields: [userId], references: [id])
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String            @unique
   watched        RecentlyWatched[]
   createdAt      DateTime          @default(now())
@@ -76,7 +76,7 @@ model Product {
   color       String
   images      String[]
 
-  shop             Shop              @relation(fields: [shopId], references: [id])
+  shop             Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
   discountType     String?
   discountAmount   Float?
   quantity         Int
@@ -90,7 +90,7 @@ model Product {
   shopId           String
   recentlyWatcheds RecentlyWatched[]
   cartId           String?
-  cart             Cart?             @relation(fields: [cartId], references: [id])
+  cart             Cart?             @relation(fields: [cartId], references: [id], onDelete: Cascade)
   orderId          String?
   orderItems       OrderItem[]
   wishlists        Wishlist[]
@@ -120,7 +120,7 @@ model DeliveryOption {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
   orders    Order[]
-  product   Product? @relation(fields: [productId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String?
 }
 
@@ -138,15 +138,15 @@ model Coupon {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now())
   vendorId          String?
-  vendor            Vendor?  @relation(fields: [vendorId], references: [userId])
+  vendor            Vendor?  @relation(fields: [vendorId], references: [userId], onDelete: Cascade)
 }
 
 model Reviews {
   id        String   @id @default(uuid())
   userId    String
   orderId   String
-  user      User     @relation(fields: [userId], references: [id])
-  order     Order    @relation(fields: [orderId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   rating    Int
   comment   String
   createdAt DateTime @default(now())
@@ -158,7 +158,7 @@ model Logs {
   title       String
   description String
   userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   timestamp   DateTime @default(now())
 }
 
@@ -166,8 +166,8 @@ model RecentlyWatched {
   id        String   @id @default(uuid())
   userId    String
   productId String
-  consumer  Consumer @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  consumer  Consumer @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   watchedAt DateTime @default(now())
 
   @@unique([productId, userId])
@@ -177,7 +177,7 @@ model Cart {
   id         String    @id @default(uuid())
   consumerId String    @unique
   quantity   Int       @default(1)
-  consumer   Consumer  @relation(fields: [consumerId], references: [userId])
+  consumer   Consumer  @relation(fields: [consumerId], references: [userId], onDelete: Cascade)
   products   Product[]
   addedAt    DateTime  @default(now())
 }
@@ -186,8 +186,8 @@ model Wishlist {
   id         String   @id @default(uuid())
   consumerId String
   productId  String
-  consumer   Consumer @relation(fields: [consumerId], references: [userId])
-  product    Product  @relation(fields: [productId], references: [id])
+  consumer   Consumer @relation(fields: [consumerId], references: [userId], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   addedAt    DateTime @default(now())
 
   @@unique([consumerId, productId])
@@ -199,7 +199,7 @@ model Order {
   address          String
   contact          String
   totalPrice       Float
-  deliveryOption   DeliveryOption? @relation(fields: [deliveryOptionId], references: [id])
+  deliveryOption   DeliveryOption? @relation(fields: [deliveryOptionId], references: [id], onDelete: SetNull)
   deliveryOptionId String?
   paymentMethod    String
   paymentStatus    String //this is payment to vendors
@@ -208,9 +208,9 @@ model Order {
   status           String
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @default(now())
-  consumer         Consumer        @relation(fields: [userId], references: [userId])
+  consumer         Consumer        @relation(fields: [userId], references: [userId], onDelete: Cascade)
   productId        String?
-  rider            Rider?          @relation(fields: [riderId], references: [id])
+  rider            Rider?          @relation(fields: [riderId], references: [id], onDelete: SetNull)
   riderId          String?
   reviews          Reviews[]
 }
@@ -221,16 +221,17 @@ model OrderItem {
   productId String
   quantity  Int
   price     Float
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Rider {
   id            String    @id @default(uuid())
   orders        Order[]
   vehicleType   String
+  status        String    @default("pending")
   vehicleNumber String
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String    @unique
   earnings      Earning[]
 }
@@ -249,14 +250,15 @@ model UserNotification {
   systemNotificationId String
   isRead               Boolean            @default(false)
   createdAt            DateTime           @default(now())
-  user                 User               @relation(fields: [userId], references: [id])
-  systemNotification   SystemNotification @relation(fields: [systemNotificationId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  systemNotification   SystemNotification @relation(fields: [systemNotificationId], references: [id], onDelete: Cascade)
 }
 
 model Admin {
   id         String       @id @default(uuid())
   name       String       @default("Admin")
   password   String       @default("admin123")
+  role       String       @default("system_admin")
   email      String       @unique @default("admin@bexiemart.com")
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @default(now())
@@ -268,7 +270,7 @@ model SystemLogs {
   action    String
   details   String
   adminId   String
-  admin     Admin    @relation(fields: [adminId], references: [id])
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
   timestamp DateTime @default(now())
 }
 
@@ -284,7 +286,7 @@ model Payment {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
   userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model TransferRecipients {
@@ -299,7 +301,7 @@ model TransferRecipients {
   recipientCode String
   activeStatus  Boolean  @default(false)
   recipientId   Int?
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String   @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now())
@@ -309,7 +311,7 @@ model Wallet {
   id        String   @id @default(uuid())
   balance   Float    @default(0.0)
   userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 }
@@ -319,10 +321,10 @@ model Earning {
   totalAmount       Float     @default(0.0)
   pendingCommission Float     @default(0.0)
   totalWithdrawn    Float     @default(0.0)
-  rider             Rider?    @relation(fields: [riderId], references: [id])
+  rider             Rider?    @relation(fields: [riderId], references: [id], onDelete: Cascade)
   riderId           String?
   consumerId        String?   @unique
-  consumer          Consumer? @relation(fields: [consumerId], references: [id])
+  consumer          Consumer? @relation(fields: [consumerId], references: [id], onDelete: Cascade)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @default(now())
 }
@@ -333,7 +335,7 @@ model Card {
   expiryDate     DateTime
   cvv            String
   userId         String          @unique
-  user           User            @relation(fields: [userId], references: [id])
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now())
   paymentMethods PaymentMethod[]
@@ -345,7 +347,7 @@ model MobileMoney {
   phoneNumber    String
   bankCode       String
   userId         String          @unique
-  user           User            @relation(fields: [userId], references: [id])
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now())
   paymentMethods PaymentMethod[]
@@ -355,8 +357,8 @@ model PaymentMethod {
   id            String       @id @default(uuid())
   cardId        String?
   mobileMoneyId String?
-  card          Card?        @relation(fields: [cardId], references: [id])
-  mobileMoney   MobileMoney? @relation(fields: [mobileMoneyId], references: [id])
-  user          User?        @relation(fields: [userId], references: [id])
+  card          Card?        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  mobileMoney   MobileMoney? @relation(fields: [mobileMoneyId], references: [id], onDelete: Cascade)
+  user          User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String       @unique
 }
