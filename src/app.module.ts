@@ -1,3 +1,5 @@
+import { RiderModule } from './rider/rider.module';
+import { RiderService } from './rider/rider.service';
 import { CouponsModule } from './coupons/coupons.module';
 import { CouponsController } from './coupons/coupons.controller';
 import { NotificationModule } from './notifications/notification.module';
@@ -45,6 +47,7 @@ import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    RiderModule,
     CouponsModule,
     NotificationModule,
     WishlistModule,
@@ -114,6 +117,7 @@ import { BullModule } from '@nestjs/bullmq';
     AppController,
   ],
   providers: [
+    RiderService,
     NotificationService,
     UserService,
     EarningService,

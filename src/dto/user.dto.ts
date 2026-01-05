@@ -1,4 +1,4 @@
-import { IsBoolean, IsDate, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
 
 export class UserDto {
   @IsString()
@@ -42,6 +42,10 @@ export class UserDto {
 
   @IsDate()
   cardExpiry: string;
+
+  @IsString()
+  @IsOptional()
+  profilePicture?: string;
 
   @IsString()
   cvv: string;

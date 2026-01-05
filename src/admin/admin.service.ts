@@ -332,4 +332,56 @@ export class AdminService {
       }
     }
   }
+
+  async performActionOnRider(
+    email: string,
+    action: AdminActionOnVendor,
+    riderId: string,
+  ) {
+    try {
+      const admin = await this.helper.fetchAdmin(email);
+
+      //check if admin exists
+      if (!admin.exists) {
+        throw new NotFoundException('Admin account not found');
+      }
+
+      //check if user is admin
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      if (action === AdminActionOnVendor.APPROVE) {
+        const rider = await this.prisma.rider.update({
+          where: { id: riderId },
+          data: { status: RiderStatus.AVAILABLE },
+        });
+        return {
+          message: 'Rider approved successfully',
+          rider,
+        };
+      } else if (action === AdminActionOnVendor.SUSPEND) {
+        const rider = await this.prisma.rider.update({
+          where: { id: riderId },
+          data: { status: RiderStatus.SUSPENDED },
+        });
+        return {
+          message: 'Rider suspended successfully',
+          rider,
+        };
+      } else if (action === AdminActionOnVendor.REMOVE) {
+        const rider = await this.prisma.rider.delete({
+          where: { id: riderId },
+        });
+        return {
+          message: 'Rider removed successfully',
+          rider,
+        };
+      }
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
 }

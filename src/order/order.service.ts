@@ -357,4 +357,27 @@ export class OrderService {
       this.logger.error(error);
     }
   }
+
+  async fetchAllOrders(email: string) {
+    try {
+      //check if user is admin is done at the controller level
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+      const orders = await this.prisma.order.findMany({
+        include: {
+          items: true,
+          rider: true,
+          reviews: true,
+          deliveryOption: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return orders;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error.message);
+    }
+  }
 }

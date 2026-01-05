@@ -20,6 +20,7 @@ model User {
   preferPromotionalEmails       Boolean             @default(true)
   preferNewProductNotifications Boolean             @default(true)
   emailVerificationToke         String?
+  profilePicture                String?
   address                       String?
   region                        String              @default("accra")
   phoneNumberVerificationToke   String?
@@ -70,12 +71,11 @@ model Consumer {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String
-  color       String
-  images      String[]
-
+  id               String            @id @default(uuid())
+  name             String
+  description      String
+  color            String
+  images           String[]
   shop             Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
   discountType     String?
   discountAmount   Float?
@@ -94,6 +94,8 @@ model Product {
   orderId          String?
   orderItems       OrderItem[]
   wishlists        Wishlist[]
+  productId        String
+  category         Category          @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Shop {
@@ -193,6 +195,15 @@ model Wishlist {
   @@unique([consumerId, productId])
 }
 
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  products    Product[]
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+}
+
 model Order {
   id               String          @id @default(uuid())
   userId           String
@@ -226,14 +237,19 @@ model OrderItem {
 }
 
 model Rider {
-  id            String    @id @default(uuid())
-  orders        Order[]
-  vehicleType   String
-  status        String    @default("pending")
-  vehicleNumber String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String    @unique
-  earnings      Earning[]
+  id              String             @id @default(uuid())
+  orders          Order[]
+  ratings         Float              @default(0.0)
+  totalDeliveries Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @default(now())
+  vehicleType     String
+  status          String             @default("pending")
+  vehicleNumber   String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String             @unique
+  earnings        Earning[]
+  notifications   UserNotification[]
 }
 
 model SystemNotification {
@@ -252,12 +268,15 @@ model UserNotification {
   createdAt            DateTime           @default(now())
   user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   systemNotification   SystemNotification @relation(fields: [systemNotificationId], references: [id], onDelete: Cascade)
+  rider                Rider?             @relation(fields: [riderId], references: [id])
+  riderId              String?
 }
 
 model Admin {
   id         String       @id @default(uuid())
   name       String       @default("Admin")
   password   String       @default("admin123")
+  profilePic String       @default("https://res.cloudinary.com/dx9z6f1dq/image/upload/v1696324863/default_admin_avatar_oqxqcg.png")
   role       String       @default("system_admin")
   email      String       @unique @default("admin@bexiemart.com")
   createdAt  DateTime     @default(now())
@@ -270,6 +289,8 @@ model SystemLogs {
   action    String
   details   String
   adminId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
   timestamp DateTime @default(now())
 }

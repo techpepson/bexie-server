@@ -103,4 +103,42 @@ export class UserService {
       }
     }
   }
+
+  async updateUserDetails(email: string, payload: Partial<UserDto>) {
+    try {
+      const user = await this.helper.fetchUser(email);
+
+      //check if user exists
+      if (!user.exists) {
+        throw new NotFoundException('User not found');
+      }
+
+      //update user details
+      const update = await this.prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          name: payload.name,
+          phone: payload.phoneNumber,
+          address: payload.address,
+          email: payload.email,
+          profilePicture: payload.profilePicture,
+          region: payload.region,
+        },
+      });
+
+      return {
+        message: 'User details updated successfully',
+        data: update,
+      };
+    } catch (error) {
+      this.logger.error(error.message);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else {
+        throw new Error(error.message);
+      }
+    }
+  }
 }

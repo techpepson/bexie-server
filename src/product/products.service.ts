@@ -106,6 +106,11 @@ export class ProductsService {
               price: payload.price,
               quantity: payload.quantity,
               status: ProductStatus.PENDING,
+              category: {
+                create: {
+                  name: payload.category,
+                },
+              },
               stockStatus:
                 payload.quantity > 0
                   ? ProductStatus.IN_STOCK
@@ -179,6 +184,11 @@ export class ProductsService {
         where: { id: productId },
         data: {
           ...payload,
+          category: {
+            update: {
+              name: payload.category,
+            },
+          },
         },
       });
 
@@ -286,6 +296,58 @@ export class ProductsService {
       } else {
         throw new InternalServerErrorException(error.message);
       }
+    }
+  }
+
+  async addNewCategory(name: string, email: string) {
+    try {
+      const admin = await this.helper.fetchAdmin(email);
+
+      //check if admin exists
+      if (!admin.exists) {
+        throw new NotFoundException('Admin account not found');
+      }
+
+      //check if user is admin
+      await this.helper.checkAdmin(email, Role.ADMIN || Role.SYSTEM_ADMIN);
+
+      const category = await this.prisma.category.create({
+        data: {
+          name,
+        },
+      });
+
+      return {
+        message: 'Category created successfully',
+        category,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async fetchAllCategories() {
+    try {
+      const categories = await this.prisma.category.findMany({
+        include: {
+          products: true,
+        },
+      });
+
+      return {
+        message: 'Categories fetched successfully',
+        categories,
+      };
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

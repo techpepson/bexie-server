@@ -207,6 +207,7 @@ export class AuthService {
           email: user.data!.email,
           role: user.data!.role,
           token: token,
+          profilePicture: user.data!.profilePicture,
           isFirstTimeUser: user.data!.isFirstTimeUser,
         },
       };
@@ -448,6 +449,133 @@ export class AuthService {
       throw new InternalServerErrorException(
         'An error occurred while creating admin account. Please try again.',
       );
+    }
+  }
+
+  async updateAdmin(
+    email: string,
+    payload: Partial<AdminDto>,
+    file?: Express.Multer.File,
+  ) {
+    try {
+      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN);
+
+      const admin = await this.prisma.admin.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      let profilePicUrl: any;
+
+      if (file) {
+        profilePicUrl = await this.helpers.uploadImage(file);
+      }
+
+      const updatedAdmin = await this.prisma.admin.update({
+        where: {
+          email,
+        },
+        data: {
+          name: payload.name,
+          password: payload.password
+            ? await bcrypt.hash(payload.password, 10)
+            : undefined,
+          role: payload.role,
+          profilePic: profilePicUrl ? profilePicUrl : undefined,
+        },
+      });
+
+      return {
+        message: 'Admin updated successfully',
+        updatedAdmin,
+      };
+    } catch (error) {
+      this.logger.error(`Update admin error: ${error}`);
+      throw new InternalServerErrorException(
+        'An error occurred while updating admin account. Please try again.',
+      );
+    }
+  }
+
+  async updateAdminPassword(
+    email: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    try {
+      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
+
+      const admin = await this.prisma.admin.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (!admin) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      const isPasswordMatch = await bcrypt.compare(oldPassword, admin.password);
+
+      if (!isPasswordMatch) {
+        throw new ForbiddenException('Old password is incorrect');
+      }
+
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      await this.prisma.admin.update({
+        where: {
+          email,
+        },
+        data: {
+          password: hashedNewPassword,
+        },
+      });
+
+      return {
+        message: 'Admin password updated successfully',
+      };
+    } catch (error) {
+      this.logger.error(`Update admin password error: ${error}`);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          'An error occurred while updating admin password. Please try again.',
+        );
+      }
+    }
+  }
+
+  async getSystemLogs(email: string) {
+    try {
+      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
+
+      const logs = await this.prisma.systemLogs.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return logs;
+    } catch (error) {
+      this.logger.error(`Fetch system logs error: ${error}`);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          'An error occurred while fetching system logs. Please try again.',
+        );
+      }
     }
   }
 }

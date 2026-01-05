@@ -119,6 +119,19 @@ export class HelpersService {
     return admin.data;
   }
 
+  async checkRider(email: string, expectedRole: Role): Promise<User> {
+    const user = await this.fetchUser(email);
+
+    if (!user.exists) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    if (user.data?.role !== expectedRole) {
+      throw new ForbiddenException('Access to service denied');
+    }
+    return user.data;
+  }
+
   randomCodeGen() {
     const uid = new ShortUniqueId({ dictionary: 'alphanum', length: 6 });
     return uid.rnd();
@@ -157,7 +170,7 @@ export class HelpersService {
       // Upload the image
       const result = await cloudinary.uploader.upload(dataUri, options);
       return {
-        publicId: result.public_id,
+        publicId: result.url,
       };
     } catch (error) {
       this.logger.error(error);
