@@ -348,12 +348,15 @@ export class AuthService {
     }
   }
 
-  async loginAdmin(email: string, payload: Partial<AdminDto>) {
+  async loginAdmin(payload: Partial<AdminDto>) {
     try {
-      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
+      await this.helpers.checkAdmin(
+        payload.email as string,
+        Role.SYSTEM_ADMIN || Role.ADMIN,
+      );
       const admin = await this.prisma.admin.findUnique({
         where: {
-          email,
+          email: payload.email!,
         },
       });
 
@@ -549,31 +552,6 @@ export class AuthService {
       } else {
         throw new InternalServerErrorException(
           'An error occurred while updating admin password. Please try again.',
-        );
-      }
-    }
-  }
-
-  async getSystemLogs(email: string) {
-    try {
-      await this.helpers.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
-
-      const logs = await this.prisma.systemLogs.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-
-      return logs;
-    } catch (error) {
-      this.logger.error(`Fetch system logs error: ${error}`);
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);
-      } else if (error instanceof ForbiddenException) {
-        throw new ForbiddenException(error.message);
-      } else {
-        throw new InternalServerErrorException(
-          'An error occurred while fetching system logs. Please try again.',
         );
       }
     }

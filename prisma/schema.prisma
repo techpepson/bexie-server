@@ -12,6 +12,7 @@ model User {
   name                          String
   email                         String              @unique
   phone                         String
+  ipAddress                     String?
   password                      String
   role                          String
   status                        String
@@ -208,6 +209,7 @@ model Order {
   id               String          @id @default(uuid())
   userId           String
   address          String
+  deliveryFee      Float           @default(0.0)
   contact          String
   totalPrice       Float
   deliveryOption   DeliveryOption? @relation(fields: [deliveryOptionId], references: [id], onDelete: SetNull)
@@ -215,6 +217,7 @@ model Order {
   paymentMethod    String
   paymentStatus    String //this is payment to vendors
   referralCode     String?
+  deliveryStatus   String          @default("pending")
   items            OrderItem[]
   status           String
   createdAt        DateTime        @default(now())
@@ -250,6 +253,7 @@ model Rider {
   userId          String             @unique
   earnings        Earning[]
   notifications   UserNotification[]
+  verification    Verification?
 }
 
 model SystemNotification {
@@ -382,4 +386,24 @@ model PaymentMethod {
   mobileMoney   MobileMoney? @relation(fields: [mobileMoneyId], references: [id], onDelete: Cascade)
   user          User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String       @unique
+}
+
+model Verification {
+  id            String @id @default(uuid())
+  riderId       String @unique
+  idNumber      String
+  rider         Rider  @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  documentType  String
+  vehicleType   String
+  vehicleNumber String
+
+  frontOfIdCard String
+  backOfIdCard  String
+  passportPhoto String
+  status        String   @default("pending")
+  licenseNumber String
+  fullNameOnId  String
+  idExpiryDate  DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
 }

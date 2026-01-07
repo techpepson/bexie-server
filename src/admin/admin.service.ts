@@ -3,6 +3,7 @@ https://docs.nestjs.com/providers#services
 */
 
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -32,12 +33,7 @@ export class AdminService {
     private readonly payment: PaymentService,
   ) {}
 
-  async verifyVendor(
-    email: string,
-    vendorId: string,
-    vendorName: string,
-    vendorMail: string,
-  ) {
+  async verifyVendor(email: string, vendorId: string) {
     try {
       const user = await this.helper.fetchUser(email);
 
@@ -73,10 +69,10 @@ export class AdminService {
 
       //send a mail to the user informing them of verification
       await this.helper.sendMail(
-        vendorMail,
+        vendor.user.email,
         {
-          userName: vendorName,
-          userEmail: vendorMail,
+          userName: vendor.user.name,
+          userEmail: vendor.user.email,
           verificationDate: new Date().toDateString(),
           appUrl: this.config.get('APP_URL'),
           supportUrl: this.config.get('SUPPORT_URL'),
@@ -381,6 +377,31 @@ export class AdminService {
         throw new NotFoundException(error.message);
       } else {
         throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async getSystemLogs(email: string) {
+    try {
+      await this.helper.checkAdmin(email, Role.SYSTEM_ADMIN || Role.ADMIN);
+
+      const logs = await this.prisma.systemLogs.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return logs;
+    } catch (error) {
+      this.logger.error(`Fetch system logs error: ${error}`);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      } else if (error instanceof ForbiddenException) {
+        throw new ForbiddenException(error.message);
+      } else {
+        throw new InternalServerErrorException(
+          'An error occurred while fetching system logs. Please try again.',
+        );
       }
     }
   }

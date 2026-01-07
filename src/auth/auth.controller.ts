@@ -2,88 +2,127 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
-  HttpStatus,
   Post,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from '../dto/auth.dto';
-import { PasswordResetChannel } from '../enum/app.enum';
-import { IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { Request } from 'express';
-
-class CheckPasswordDto {
-  @IsNotEmpty()
-  @IsString()
-  oldPassword: string;
-}
-
-class VerifyPasswordDto {
-  @IsNotEmpty()
-  @IsString()
-  token: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(8)
-  newPassword: string;
-}
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { PasswordResetChannel } from '../enum/app.enum';
+import { AdminDto } from '../dto/admin.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @HttpCode(HttpStatus.CREATED)
   async register(@Body() payload: RegisterDto) {
-    return await this.authService.register(payload);
+    const register = await this.authService.register(payload);
+    return register;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('verify-email')
-  @UseGuards(JwtAuthGuard)
   async verifyEmail(@Query('token') token: string, @Req() req: Request) {
-    const email = await (req.user as any)?.email;
-    return await this.authService.verifyEmail(token, email);
+    const email = (req.user as any)?.email;
+    const verify = await this.authService.verifyEmail(email, token);
+    return verify;
   }
 
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
   async login(@Body() payload: LoginDto) {
-    return await this.authService.login(payload);
+    const login = await this.authService.login(payload);
+    return login;
   }
 
-  @Post('check-password')
   @UseGuards(JwtAuthGuard)
-  @HttpCode(HttpStatus.OK)
-  async checkPassword(@Body() body: CheckPasswordDto, @Req() req: Request) {
-    const email = await (req.user as any)?.email;
-    await this.authService.checkPasswordEquality(body.oldPassword, email);
-    return { message: 'Password matches.' };
+  @Post('check-password-equality')
+  async checkPasswordEquality(
+    @Body() oldPassword: string,
+    @Req() req: Request,
+  ) {
+    const email = (req.user as any)?.email;
+    const passwordVisibility = await this.authService.checkPasswordEquality(
+      oldPassword,
+      email,
+    );
+    return passwordVisibility;
   }
 
-  @Post('request-token')
-  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Get('request-token')
   async requestToken(
     @Query('channel') channel: PasswordResetChannel,
     @Req() req: Request,
   ) {
-    const email = await (req.user as any)?.email;
-    return await this.authService.requestToken(channel, email);
+    const email = (req.user as any)?.email;
+    const requestToken = await this.authService.requestToken(channel, email);
+    return requestToken;
   }
 
-  @Post('verify-password')
-  @HttpCode(HttpStatus.OK)
-  async verifyPassword(
-    @Body() body: VerifyPasswordDto,
+  @UseGuards(JwtAuthGuard)
+  @Post('verify-password-token')
+  async verifyPasswordTOken(
+    @Body() newPassword: string,
     @Req() req: Request,
     @Query('token') token: string,
   ) {
-    const email = await (req.user as any)?.email;
-    await this.authService.verifyPasswordToken(token, email, body.newPassword);
-    return { message: 'Password reset successfully.' };
+    const email = (req.user as any).email;
+    const verifyToken = await this.authService.verifyPasswordToken(
+      token,
+      email,
+      newPassword,
+    );
+    return verifyToken;
+  }
+
+  @Post('login-admin')
+  async loginAdmin(@Body() payload: Partial<AdminDto>) {
+    const loginAdmin = await this.authService.loginAdmin(payload);
+    return loginAdmin;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('create-admin')
+  async createAdmin(@Body() payload: AdminDto, @Req() req: Request) {
+    const email = (req.user as any).email;
+    const createAdmin = await this.authService.createAdmin(email, payload);
+    return createAdmin;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('update-admin')
+  async updateAdmin(
+    @Body() payload: Partial<AdminDto>,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
+    const email = (req.user as any).email;
+    const updateAdmin = await this.authService.updateAdmin(
+      email,
+      payload,
+      file,
+    );
+    return updateAdmin;
+  }
+
+  async updateAdminPassword(
+    @Body() newPassword: string,
+    @Body() oldPassword: string,
+    @Req() req: Request,
+  ) {
+    const email = (req.user as any).email;
+    const updatePassword = await this.authService.updateAdminPassword(
+      email,
+      oldPassword,
+      newPassword,
+    );
+    return updatePassword;
   }
 }
